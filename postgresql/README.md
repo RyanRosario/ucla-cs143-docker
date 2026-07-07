@@ -26,7 +26,7 @@ data, etc. without any extra setup.
 
 > **Quick start (once Docker is installed):**
 > ```bash
-> wget -O cs143.sh https://raw.githubusercontent.com/RyanRosario/ucla-cs143-docker/main/postgresql/cs143.sh
+> curl -fSL -o cs143.sh https://raw.githubusercontent.com/RyanRosario/ucla-cs143-docker/main/postgresql/cs143.sh
 > chmod +x cs143.sh
 > ./cs143.sh            # pulls/creates/starts the container, drops you into a shell
 > ```
@@ -129,10 +129,11 @@ you don't have to remember individual `docker` commands. It pulls the image if
 needed, creates the container the first time, starts it if it's stopped, waits
 until Postgres is actually ready, and drops you into a shell.
 
-In a folder you want to work from, download `cs143.sh` and make it executable:
+In a folder you want to work from, download `cs143.sh` with `curl` (preinstalled
+on macOS and Linux/WSL) and make it executable:
 
 ```bash
-wget -O cs143.sh https://raw.githubusercontent.com/RyanRosario/ucla-cs143-docker/main/postgresql/cs143.sh
+curl -fSL -o cs143.sh https://raw.githubusercontent.com/RyanRosario/ucla-cs143-docker/main/postgresql/cs143.sh
 chmod +x cs143.sh          # make it runnable (needed on Mac/Linux/WSL)
 ```
 
