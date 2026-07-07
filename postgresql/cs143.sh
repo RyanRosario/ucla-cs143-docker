@@ -20,7 +20,10 @@
 set -euo pipefail
 
 NAME="${NAME:-cs143}"
-IMAGE="${IMAGE:-cs143:latest}"
+# Default to the published Docker Hub image so a freshly downloaded script just
+# works for students. Instructors testing a local build can override with
+# `IMAGE=cs143:latest ./cs143.sh`.
+IMAGE="${IMAGE:-ryanrosario/cs143-ucla:latest}"
 PORT="${PORT:-5432}"
 VOLUME="${VOLUME:-cs143-data}"   # named volume so data survives 'rm'; set empty to disable
 

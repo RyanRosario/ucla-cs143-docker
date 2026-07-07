@@ -26,7 +26,7 @@ data, etc. without any extra setup.
 
 > **Quick start (once Docker is installed):**
 > ```bash
-> curl -fsSL -o cs143.sh https://raw.githubusercontent.com/RyanRosario/ucla-cs143-docker/main/postgresql/cs143.sh
+> wget -O cs143.sh https://raw.githubusercontent.com/RyanRosario/ucla-cs143-docker/main/postgresql/cs143.sh
 > chmod +x cs143.sh
 > ./cs143.sh            # pulls/creates/starts the container, drops you into a shell
 > ```
@@ -101,7 +101,7 @@ Install **Docker Engine** with Docker's convenience script (works on Ubuntu,
 Debian, Fedora, and more):
 
 ```bash
-curl -fsSL https://get.docker.com | sudo sh
+wget -qO- https://get.docker.com | sudo sh
 ```
 
 Then let your user run Docker without `sudo`. Log out and back in afterward (or
@@ -122,39 +122,21 @@ For distro-specific package instructions instead of the script, see
 
 ---
 
-## 2. Get the `cs143.sh` helper script
+## 2. Download the `cs143.sh` helper script
 
-This repo includes **`cs143.sh`**, a single script that manages the whole
-container lifecycle so you don't have to remember individual `docker` commands.
-It pulls the image if needed, creates the container the first time, starts it if
-it's stopped, waits until Postgres is actually ready, and drops you into a
-shell.
-
-Pick **one** of the two ways to get it.
-
-### Option A — download just the script (simplest)
+**`cs143.sh`** is a single script that manages the whole container lifecycle so
+you don't have to remember individual `docker` commands. It pulls the image if
+needed, creates the container the first time, starts it if it's stopped, waits
+until Postgres is actually ready, and drops you into a shell.
 
 In a folder you want to work from, download `cs143.sh` and make it executable:
 
 ```bash
-# with curl:
-curl -fsSL -o cs143.sh https://raw.githubusercontent.com/RyanRosario/ucla-cs143-docker/main/postgresql/cs143.sh
-
-# ...or with wget:
 wget -O cs143.sh https://raw.githubusercontent.com/RyanRosario/ucla-cs143-docker/main/postgresql/cs143.sh
-
 chmod +x cs143.sh          # make it runnable (needed on Mac/Linux/WSL)
 ```
 
-### Option B — clone the whole repo
-
-This also gets you the per-assignment data loaders (e.g. `load-hw2.sh`):
-
-```bash
-git clone https://github.com/RyanRosario/ucla-cs143-docker.git
-cd ucla-cs143-docker/postgresql
-chmod +x cs143.sh
-```
+That's the only file you need — you don't have to clone anything or install Git.
 
 > **`chmod +x`** marks the script as executable so you can run it with
 > `./cs143.sh`. If you skip it, you'll get `Permission denied`; you can also
@@ -226,19 +208,13 @@ You can override defaults with environment variables:
 | Var | Default | Meaning |
 |-----|---------|---------|
 | `NAME` | `cs143` | Container name |
-| `IMAGE` | `cs143:latest` | Image to run (set to `ryanrosario/cs143-ucla:latest` to use the published image) |
+| `IMAGE` | `ryanrosario/cs143-ucla:latest` | Image to run (the published Docker Hub image) |
 | `PORT` | `5432` | Host port mapped to Postgres |
 | `VOLUME` | `cs143-data` | Named data volume (set empty to store data only in the container) |
 
 ```bash
 PORT=5433 ./cs143.sh up      # e.g. if 5432 is already in use
-IMAGE=ryanrosario/cs143-ucla:latest ./cs143.sh   # use the Docker Hub image explicitly
 ```
-
-> If you downloaded only the script (Option A) and haven't built a local
-> `cs143:latest`, run with `IMAGE=ryanrosario/cs143-ucla:latest` (or `export
-> IMAGE=ryanrosario/cs143-ucla:latest` once in your shell) so it uses the
-> published image.
 
 ### Windows & Docker Desktop notes
 
@@ -360,21 +336,16 @@ Postgres. Open a shell first:
 
 ### Homework data loaders
 
-For assignments that ship a loader script (e.g. **`load-hw2.sh`** in this repo),
-just run it inside the container shell — it downloads the dataset and imports it
-for you, and is safe to re-run (it skips if the data is already loaded):
+Some assignments come with a loader script (e.g. **`load-hw2.sh`**) that
+downloads the dataset and imports it for you, and is safe to re-run (it skips if
+the data is already loaded). Your instructor will give you a download link for
+the loader. The easiest way to use it is to download it **inside the container
+shell** (the image has `wget`) and run it:
 
 ```bash
 # inside the container's shell (./cs143.sh)
+wget -O load-hw2.sh INSTRUCTOR_PROVIDED_LINK     # link your instructor gives you
 bash load-hw2.sh
-```
-
-If you cloned the repo (Option B), the loader is already alongside `cs143.sh`.
-To get it into the container, either clone inside the shell or copy it in from
-your host:
-
-```bash
-docker cp ./load-hw2.sh cs143:/home/cs143/     # from your host shell, then run it inside
 ```
 
 ### Loading a SQL dump yourself
@@ -580,9 +551,7 @@ docker save cs143:latest -o cs143.tar
   (bash + psql already ship in the Debian image), creates the `cs143` OS user
   with a home directory, and sets the bootstrap credentials.
 - `cs143.sh` — container lifecycle helper (shell/psql/up/stop/restart/status/
-  logs/rm).
-- `load-hw2.sh` — example homework data loader (downloads + imports the HW2
-  dump, idempotent).
+  logs/rm); students download just this file and run it.
 - `build.sh` — the multi-architecture build script.
 
 ### Changing the baked-in credentials
