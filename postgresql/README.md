@@ -336,16 +336,16 @@ Postgres. Open a shell first:
 
 ### Homework data loaders
 
-Some assignments come with a loader script (e.g. **`load-hw2.sh`**) that
-downloads the dataset and imports it for you, and is safe to re-run (it skips if
-the data is already loaded). Your instructor will give you a download link for
-the loader. The easiest way to use it is to download it **inside the container
-shell** (the image has `wget`) and run it:
+Some assignments come with a loader script that downloads the dataset and
+imports it for you, and is safe to re-run (it skips if the data is already
+loaded). Your instructor will give you a download link for the loader. The
+easiest way to use it is to download it **inside the container shell** (the
+image has `wget`) and run it:
 
 ```bash
 # inside the container's shell (./cs143.sh)
-wget -O load-hw2.sh INSTRUCTOR_PROVIDED_LINK     # link your instructor gives you
-bash load-hw2.sh
+wget -O load-data.sh INSTRUCTOR_PROVIDED_LINK     # link your instructor gives you
+bash load-data.sh
 ```
 
 ### Loading a SQL dump yourself
