@@ -1,56 +1,45 @@
-FROM debian:bullseye-slim
+# Postgres image with bash, psql and wget available.
+#
+# The official postgres image is Debian-based, so bash and the psql client
+# already ship in it. We only need to add wget (plus ca-certificates so wget
+# can talk to HTTPS endpoints).
+ARG PG_VERSION=16
+FROM postgres:${PG_VERSION}-bookworm
 
-LABEL maintainer="Ryan R. Rosario <rrosario@cs.ucla.edu>"
-LABEL version="25w-2"
-
-# Set environment variables
-ENV POSTGRES_USER=cs143 \
-    POSTGRES_PASSWORD=cs143 \
-    POSTGRES_DB=cs143 \
-    PGDATA=/var/lib/postgresql/16/main
-
-# Install PostgreSQL and utilities
-RUN apt-get update && apt-get install -y \
-    curl gnupg lsb-release \
-    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/postgresql.list \
-    && apt-get update \
-    && apt-get install -y \
-    postgresql-16 \
-    postgresql-client-16 \
-    wget \
-    less \
-    vim \
-    nano \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        wget \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Add PostgreSQL binaries to the PATH
-ENV PATH="/usr/lib/postgresql/16/bin:${PATH}"
+# Bootstrap credentials. On first start with an empty data directory the
+# official entrypoint uses these to create a superuser "cs143" that owns a
+# database named "cs143". As a superuser, cs143 can create/drop schemas and
+# tables and import data without further grants.
+#
+# We intentionally do NOT bake a password into the image, and we do NOT set
+# POSTGRES_HOST_AUTH_METHOD via ENV — buildx's SecretsUsedInArgOrEnv linter
+# flags any ENV/ARG whose name contains AUTH. Instead, a thin entrypoint
+# wrapper defaults to password-less "trust" auth for local dev only when the
+# operator hasn't chosen otherwise. To use password auth, just pass
+# `-e POSTGRES_PASSWORD=...` at `docker run` time.
+ENV POSTGRES_USER=cs143 \
+    POSTGRES_DB=cs143
 
-# Create cs143 user
-RUN useradd -ms /bin/bash cs143 && \
-    passwd -d cs143 && \
-    echo 'PS1="\u@postgresql:\w\$ "' >> /home/cs143/.bashrc && \
-    mkdir -p /etc/sudoers.d && \
-    echo "cs143 ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/cs143
+# Client-side defaults so a bare `psql` (from any shell in the container)
+# connects as the cs143 role to the cs143 database instead of falling back to
+# libpq's default of "the current OS user" — inside the container that user is
+# root, which yields `FATAL: role "root" does not exist`. These are libpq
+# variables read by the psql *client*; the server ignores them, so they don't
+# affect first-boot initialization (which uses POSTGRES_USER/POSTGRES_DB).
+ENV PGUSER=cs143 \
+    PGDATABASE=cs143
 
-# Setup PostgreSQL directories
-RUN mkdir -p "$PGDATA" && \
-    chown -R postgres:postgres /var/lib/postgresql && \
-    chmod -R 700 /var/lib/postgresql
+COPY set-default-auth.sh /usr/local/bin/set-default-auth.sh
+RUN chmod +x /usr/local/bin/set-default-auth.sh
 
-# Copy initialization files
-COPY init.sql /docker-entrypoint-initdb.d/
-COPY start.sh /start.sh
-RUN chmod +x /start.sh && \
-    chown -R postgres:postgres /docker-entrypoint-initdb.d
+# Sanity check that the three requested tools are present in the final image.
+RUN command -v bash && command -v psql && command -v wget
 
-# Volume configuration
-VOLUME ["/var/lib/postgresql/data", "/home/cs143"]
-
-# Expose PostgreSQL port
-EXPOSE 5432
-
-# Switch to postgres user and start
-USER postgres
-CMD ["/start.sh"]
+ENTRYPOINT ["set-default-auth.sh"]
+CMD ["postgres"]
