@@ -37,7 +37,10 @@ ensure_running() {
     if ! exists; then
         echo ">> creating container '${NAME}' from ${IMAGE} (port ${PORT})"
         local vol_args=()
-        [ -n "${VOLUME}" ] && vol_args=(-v "${VOLUME}:/var/lib/postgresql/data")
+        # PG 18+ images store data in a major-version subdir and expect the
+        # persistent mount at /var/lib/postgresql (not .../data, the pre-18
+        # location, which the entrypoint now rejects as a stray mount).
+        [ -n "${VOLUME}" ] && vol_args=(-v "${VOLUME}:/var/lib/postgresql")
         docker run -d --name "${NAME}" -p "${PORT}:5432" "${vol_args[@]}" "${IMAGE}" >/dev/null
     elif ! running; then
         echo ">> starting existing container '${NAME}'"
@@ -66,10 +69,15 @@ cmd_shell() {
     # the OS user 'root', giving `FATAL: role "root" does not exist`). The image
     # sets these too; exporting here also fixes containers built before that.
     #
+    # -u cs143 runs the shell as the cs143 OS user and -w /home/cs143 lands it in
+    # that user's home directory (~), matching how students expect the shell to
+    # open. (Requires an image built with the cs143 user; rebuild with ./build.sh
+    # if you get a "unable to find user" error from an older image.)
+    #
     # Note: no `exec` here so control returns to the script when the user exits
     # the shell, letting us print the stop-to-save-resources hint below. `|| true`
     # keeps `set -e` from aborting on a non-zero exit status from the shell.
-    docker exec -it "${NAME}" bash -c 'export PS1="cs143\$ " PGUSER=cs143 PGDATABASE=cs143; exec bash --norc -i' || true
+    docker exec -it -u cs143 -w /home/cs143 "${NAME}" bash -c 'export PS1="cs143\$ " PGUSER=cs143 PGDATABASE=cs143; exec bash --norc -i' || true
     echo ">> To save resources, you may want to stop the container using ./cs143.sh stop. You can always start it again with ./cs143.sh start."
 }
 

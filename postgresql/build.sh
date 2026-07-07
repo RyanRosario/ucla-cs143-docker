@@ -16,7 +16,7 @@ set -euo pipefail
 
 IMAGE="${IMAGE:-cs143}"
 TAG="${TAG:-latest}"
-PG_VERSION="${PG_VERSION:-16}"
+PG_VERSION="${PG_VERSION:-18}"
 PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64}"
 BUILDER="${BUILDER:-cs143-builder}"
 
